@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,6 +19,7 @@ namespace XuLyAnh
         public Form1()
         {
             InitializeComponent();
+            LoadData();
         }
 
         private void pictureBox1_Click(object sender, EventArgs e)
@@ -32,10 +34,12 @@ namespace XuLyAnh
                 pictureBox1.Image = bitMap;
             }
             pictureBox2.Image = TaoAnhXam(bitMap);
+            TaoAnhDT();
         }
-        public void TinhPhanThieu()
+        public double TinhPhanThieu()
         {
-
+            double dolon = Math.Round(((double)kichthuoc/68793)*100,2);
+            return dolon;
         }
         unsafe
         private Bitmap TaoAnhXam(Bitmap bM)
@@ -74,57 +78,12 @@ namespace XuLyAnh
             tg.UnlockBits(bitmapData);
             return tg;
         }
-        unsafe
-        private Bitmap ChinhDoSang(Bitmap bM, int c)
-        {
-            Bitmap tg = bM;
-
-            int[,] anhMoi = new int[tg.Width, tg.Height];
-
-            //Bước 1
-            BitmapData bitmapData = tg.LockBits(new Rectangle(0, 0, tg.Width, tg.Height), ImageLockMode.ReadOnly, tg.PixelFormat);
-
-            //Bước 2: Tính offSet
-            int offSet = bitmapData.Stride - tg.Width * 3;
-
-            byte* p = (byte*)bitmapData.Scan0;
-
-            for (int i = 0; i < tg.Width; i++)
-            {
-                for (int j = 0; j < tg.Height; j++)
-                {
-                    if (anh[i, j] + c > 255)
-                        anhMoi[i, j] = anh[i,j];
-                    else if (anh[i, j]+c < 0)
-                        anhMoi[i, j] = anh[i,j];
-                    else
-                        anhMoi[i, j] = anh[i, j] + c;
-                }
-            }
-            for (int i = 0; i < tg.Width; i++)
-            {
-                for (int j = 0; j < tg.Height; j++)
-                {
-                    p[0] = (byte)anhMoi[i, j];
-
-                    p[1] = (byte)anhMoi[i, j];
-
-                    p[2] = (byte)anhMoi[i, j];
-
-                    p += 3;
-                }
-
-                p += offSet;
-
-            }
-            anh = anhMoi;
-            tg.UnlockBits(bitmapData);
-            return tg;
-        }
+        
         int kichthuoc = 0;
         unsafe
         private int[,] PhanNguongTuDong(int[,] anhtg)
         {
+            int maxg = 0;
             int[,] anhmoi = new int[bitMap.Width, bitMap.Height];
             //anhtg = new int[5, 6]{ {0,1,2,3,4,5 },{ 0, 0, 1, 2, 3, 4 },{ 0, 0,0,1, 2, 3 },{ 0,0,0,0, 1, 2 },{ 0, 0,0,0,0, 1 } };
             float[] hg = new float[256];
@@ -185,7 +144,7 @@ namespace XuLyAnh
 
         }
         unsafe
-        private void btnTaoAnhDT_Click(object sender, EventArgs e)
+        public void TaoAnhDT()
         {
             kichthuoc = 0;
             int[,] anh1 = PhanNguongTuDong(anh);
@@ -218,7 +177,6 @@ namespace XuLyAnh
             }
             tg.UnlockBits(bitmapData);
             pictureBox2.Image = tg;
-            MessageBox.Show(kichthuoc.ToString());
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -226,8 +184,7 @@ namespace XuLyAnh
             double tong = DemMau(bitMap) + other;
             double tilechay =Math.Round((DemMau(bitMap) / tong) * 100,1);
             double tilekchay = Math.Round((other / tong) * 100,1);
-            MessageBox.Show("Tỉ lệ cháy: "+tilechay+"% \nTỉ lệ vừa: "+tilekchay+"%","Kết Quả",MessageBoxButtons.OK,MessageBoxIcon.Information);
-            MessageBox.Show("Tổng số điểm: "+tong+"\n Số điểm đen: "+kichthuoc+"%","Kết Quả",MessageBoxButtons.OK,MessageBoxIcon.Information);
+            MessageBox.Show("Tỉ lệ cháy: "+tilechay+"\nĐộ lớn: "+TinhPhanThieu(),"Kết Quả",MessageBoxButtons.OK,MessageBoxIcon.Information);
         }
         unsafe
         public double DemMau(Bitmap bt)
@@ -274,6 +231,32 @@ namespace XuLyAnh
             other++;
             return false;
         }
-        //Đây là phần ghi thêm
+        public void LoadData()
+        {
+            List<LuatMau> LiLuat = new List<LuatMau>();
+            try
+            {
+                StreamReader rd = new StreamReader("Luat.txt");
+                while(rd.ReadLine()!=null)
+                {
+                    String[] lineData = rd.ReadLine().Split(' ');
+                    String Ten = lineData[0];
+                    float DoLon = float.Parse(lineData[1]);
+                    float DoChay = float.Parse(lineData[2]);
+                    int Lop = int.Parse(lineData[3]);
+                    LuatMau l = new LuatMau(Ten,DoLon,DoChay,Lop);
+                    LiLuat.Add(l);
+                }
+                rd.Close();
+                dataGridView1.DataSource = LiLuat;
+            }
+            catch
+            {
+                if(MessageBox.Show("File không tồn tại!", "Cảnh báo!", MessageBoxButtons.RetryCancel, MessageBoxIcon.Error).ToString() == "Retry")
+                {
+                    LoadData();
+                }
+            }
+        }
     }
 }
