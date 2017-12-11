@@ -14,8 +14,6 @@ namespace XuLyAnh
     public partial class Form1 : Form
     {
         Bitmap bitMap;
-        int maxg = 0;
-
         int[,] anh;
         public Form1()
         {
@@ -32,15 +30,18 @@ namespace XuLyAnh
                 bitMap = new Bitmap(openFile.FileName);
 
                 pictureBox1.Image = bitMap;
-
-                anh = new int[bitMap.Width, bitMap.Height];
             }
+            pictureBox2.Image = TaoAnhXam(bitMap);
+        }
+        public void TinhPhanThieu()
+        {
+
         }
         unsafe
         private Bitmap TaoAnhXam(Bitmap bM)
         {
-            Bitmap tg = bM;
-
+            Bitmap tg = bM.Clone(new Rectangle(0,0,bM.Width,bM.Height),bM.PixelFormat);
+            anh = new int[bM.Width, bM.Height];
             //Bước 1
             BitmapData bitmapData = tg.LockBits(new Rectangle(0, 0, tg.Width, tg.Height), ImageLockMode.ReadOnly, tg.PixelFormat);
 
@@ -72,23 +73,6 @@ namespace XuLyAnh
             }
             tg.UnlockBits(bitmapData);
             return tg;
-        }
-        public void VeHistogram()
-        {
-            chart1.Series[0].Points.Clear();
-            int[] hg = new int[256];
-            for (int i = 0; i < bitMap.Width; i++)
-            {
-                for (int j = 0; j < bitMap.Height; j++)
-                {
-                    hg[anh[i, j]]++;
-                }
-            }
-            for (int i = 0; i < 256; i++)
-            {
-                chart1.Series[0].Points.AddXY(i+"",hg[i]);
-            }
-            
         }
         unsafe
         private Bitmap ChinhDoSang(Bitmap bM, int c)
@@ -200,23 +184,6 @@ namespace XuLyAnh
             return anhmoi;
 
         }
-        private void btnTaoAnhXam_Click(object sender, EventArgs e)
-        {
-            pictureBox2.Image = TaoAnhXam((Bitmap)bitMap.Clone());
-            VeHistogram();
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            pictureBox2.Image = ChinhDoSang(bitMap, 5);
-            VeHistogram();
-        }
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            pictureBox2.Image = ChinhDoSang(bitMap, -5);
-            VeHistogram();
-        }
         unsafe
         private void btnTaoAnhDT_Click(object sender, EventArgs e)
         {
@@ -307,61 +274,6 @@ namespace XuLyAnh
             other++;
             return false;
         }
-        unsafe
-        public Bitmap TangTuongPhan(Bitmap bm, float anpha, float beta, float gama, int a, int b)
-        {
-
-            Bitmap tg = bm;
-
-            int[,] anhmoi = new int[tg.Width, tg.Height];
-
-            BitmapData bitmapData = tg.LockBits(new Rectangle(0,0,tg.Width,tg.Height),ImageLockMode.ReadOnly,tg.PixelFormat);
-
-            int offSet = bitmapData.Stride - tg.Width * 3;
-
-            byte* p =(byte*) bitmapData.Scan0;
-
-            for(int i=0;i<tg.Width;i++)
-            {
-                for(int j=0;j<tg.Height;j++)
-                {
-                    if (anh[i, j] <= a)
-                    {
-                        anhmoi[i, j] =(int)(anh[i, j] * anpha);
-                    }
-                    else if (anh[i, j] <= b)
-                    {
-                        anhmoi[i, j] = (int)(anh[i, j] * beta);
-                    }
-                    else
-                        anhmoi[i, j] = (int)(anh[i, j] * gama);
-                }
-            }
-
-            for (int i = 0; i < tg.Width; i++)
-            {
-                for (int j = 0; j < tg.Height; j++)
-                {
-                    p[0] = (byte)anhmoi[i, j];
-
-                    p[1] = (byte)anhmoi[i, j];
-
-                    p[2] = (byte)anhmoi[i, j];
-
-                    p += 3;
-
-                }
-                p += offSet;
-            }
-            anh = anhmoi;
-
-            tg.UnlockBits(bitmapData);
-
-            return tg;
-        }
-        private void btnTangTP_Click(object sender, EventArgs e)
-        {
-            pictureBox2.Image = TangTuongPhan(bitMap,(float)0.5,8,(float)0.5,10,50);
-        }
+        //Đây là phần ghi thêm
     }
 }
